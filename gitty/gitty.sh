@@ -8,10 +8,16 @@ _favourite_namespaces=(\
     #'add-your-favourites-here' \
 )
 
-##########################################
+# Changelog:
+# 
+# 2022.07.30 - version 1
+# 2022.08.01 - version 2
+#     - fixed a bug where when kubectl is installed, the script will exit with code 1
+#     - fixed a bug where when there is just one match for a namespace or pod, awk will trim it out
+#     - made namespace and pod search case-insensitive
 
 _script_name="${0##*/}"
-_script_version="2022.07.30"
+_script_version="2022.08.01"
 
 _syntax="
 ${_script_name}   ${_script_version}
@@ -24,9 +30,12 @@ case "$1" in
         exit 0;;
 esac
 
-2>/dev/null 1>&2 kubectl version --client || \
+_test_kubectl_installed=$(kubectl version --client 2>/dev/null)
+
+if [[ $? -gt 0 ]]; then
     echo "kubectl not found"
     exit 1
+fi
 
 _user_choice_select=""
 _user_choice_prompt=""
@@ -69,16 +78,12 @@ function convert_to_array() {
 }
 
 function get_namespaces() {
-    __namespaces="$(kubectl get namespace | \
-                        grep $1 | \
-                        awk 'NR>1 {print $1}')"
+    __namespaces="$(kubectl get namespace | grep -iF "$1" | awk '{ print $1 }')"
     convert_to_array "${__namespaces}"
 }
 
 function get_pods() {
-    __pods="$(kubectl get pods -n $1 | \
-                grep $2 | \
-                awk 'NR>1 {print $1}')"
+    __pods="$(kubectl get pods -n "$1" | grep -iF "$2" | awk '{ print $1 }')"
     convert_to_array "${__pods}"
 }
 
