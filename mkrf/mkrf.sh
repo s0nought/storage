@@ -3,7 +3,7 @@
 # make report file
 
 _script_name="${0##*/}"
-_script_version="2022.07.30"
+_script_version="2022.08.02"
 
 _file_name=$(date "+%Y.%m.%d")
 _dir_path="work/${_file_name//.//}"
