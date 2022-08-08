@@ -5,7 +5,7 @@ Just a shell to run a python script against all work report files.
 
 ## Usage
 
-`mktr.sh <target_dir>`
+`./mktr.sh <target_dir>`
 
 ## Positional and/or Named arguments
 
@@ -13,7 +13,7 @@ Just a shell to run a python script against all work report files.
 
 ## Example
 
-`mktr.sh "~/work"`
+`./mktr.sh "~/work"`
 
 # mktr.py
 
