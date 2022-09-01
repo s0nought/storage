@@ -22,7 +22,7 @@ class StoreDateAction(argparse.Action):
         x = map(lambda x : int(x), values.split("-"))
         setattr(namespace, self.dest, date(*x))
 
-class StoreEmployeesAction(argparse.Action):
+class StoreFileContentsAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs = None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
@@ -69,7 +69,7 @@ parser.add_argument(
 
 parser.add_argument(
     '-t', '--team',
-    action = StoreEmployeesAction,
+    action = StoreFileContentsAction,
     type = str,
     required = True,
     help = "Employees' list.",
@@ -88,13 +88,15 @@ def date_span(start_date, end_date, delta = timedelta(days = 1)):
 def get_host():
     return random.choice(args.team)
 
+result = ""
+
 team_size = len(args.team)
 
 last_host = ""
 processed = []
 
-for day in date_span(args.start_date, args.end_date):
-    if day.weekday() in [5, 6]:
+for date in date_span(args.start_date, args.end_date):
+    if date.weekday() in [5, 6]:
         continue
 
     if len(processed) == team_size:
@@ -102,7 +104,7 @@ for day in date_span(args.start_date, args.end_date):
 
     host = get_host()
 
-    if len(processed) == 0:
+    if len(processed) == 0 and host != last_host:
         processed.append(host)
     else:
         while host in processed or host == last_host:
@@ -111,4 +113,6 @@ for day in date_span(args.start_date, args.end_date):
         processed.append(host)
         last_host = host
 
-    print(f"{day} - {host}")
+    result += f"/remind @{host} \"Проведи Daily, пожалуйста :)\" on {date.month}/{date.day} at 10:30am\n"
+
+print(result)

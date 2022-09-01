@@ -5,7 +5,7 @@ Choose Daily hosts randomly.
 
 ## Usage
 
-`chdh.py -s YYYY-MM-DD -e YYYY-MM-DD -t FILE_PATH`
+`chdh.py -s "YYYY-MM-DD" -e "YYYY-MM-DD" -t "FILE_PATH"`
 
 ## Positional and/or Named arguments
 
@@ -26,4 +26,4 @@ Employees' list.
 
 ## Example
 
-`chdh.py -s 2022-8-30 -e 2022-9-9 -t employees.txt`
+`chdh.py -s "2022-8-30" -e "2022-9-9" -t "employees.txt"`
