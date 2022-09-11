@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Questionnaire</title>
+<style>
+body {
+    margin: 0;
+    padding: 8px;
+}
+
+a {
+    text-decoration: none;
+}
+
+#questionnaireWrapper {
+    padding-right: 500px;
+}
+
+#actionsWrapper {
+    position: fixed;
+    right: 42px;
+    top: 42px;
+    text-align: center;
+}
+
+#resultWrapper {
+    height: 420px;
+    width: 420px;
+    resize: none;
+    padding: 0;
+    margin: 0;
+}
+
+.notes {
+    width: 50%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.qna {
+    border-bottom: 1px solid #000;
+    padding: 15px 0 15px 0;
+}
+
+.question {
+    font-weight: bold;
+}
+
+.answer {
+    opacity: 0.5;
+    padding: 0 0 0 50px;
+}
+
+form {
+    margin: 10px 0;
+}
+</style>
+</head>
+<body>
+
+<div id="questionnaireWrapper"></div>
+
+<div id="actionsWrapper">
+    <button id="resultButton" type="button">Отчёт</button> <button id="copyButton" type="button">Скопировать</button>
+    <br>
+    <textarea id="resultWrapper"></textarea>
+</div>
+
+<script>
+const MAX_SINGLE_GRADE = 3;
+
+// Предупреждение перед закрытием/обновлением страницы
+window.addEventListener("beforeunload", (event) => {
+    event.returnValue = "Данные будут утеряны. Продолжить?";
+});
+
+// Блок опросника
+const questionnaireWrapper = document.getElementById("questionnaireWrapper");
+
+// Элементы отчёта
+const resultButton = document.getElementById("resultButton");
+const copyButton = document.getElementById("copyButton");
+const resultWrapper = document.getElementById("resultWrapper");
+
+resultButton.addEventListener("click", () => {
+    getQuestionnaireResults(resultWrapper);
+});
+
+copyButton.addEventListener("click", () => {
+    copyTextToClipboard(resultWrapper);
+});
+
+// Оценка ответа
+let answerGrades = new Map();
+
+answerGrades.set(3, "Дан")
+.set(2, "Дан с ошибками")
+.set(1, "Дан после подсказки")
+.set(0, "Не дан");
+
+// Опросник
+let questionnaire = new Map();
+
+questionnaire.set(
+    {
+        tag: "theory",
+        title: "Теория"
+    },
+    [
+        {
+            q: "What is the answer to the ultimate question of life, the universe and everything?",
+            a: "42"
+        }
+    ]
+);
+
+function addClass(element, className) {
+    element.classList.add(className);
+}
+
+function removeClass(element, className) {
+    element.classList.remove(className);
+}
+
+function hideElement(elementId) {
+    addClass(document.getElementById(elementId), "hidden");
+}
+
+function showElement(elementId) {
+    removeClass(document.getElementById(elementId), "hidden");
+}
+
+function createElement(tagName, innerText, attributes) {
+    const element = document.createElement(tagName);
+
+    if (innerText !== undefined) {
+        const text = document.createTextNode(innerText);
+        element.appendChild(text);
+    }
+
+    if (attributes !== undefined) {
+        for (const item of attributes) {
+            element.setAttribute(item.attr, item.value);
+        }
+    }
+
+    return element;
+}
+
+// Форма с оценками
+function createGradesBlock(tag, iterationNumber) {
+    const element = createElement("FORM");
+
+    // Добавление лейбла и инпута для каждой оценки
+    for (const [key, value] of answerGrades) {
+        const grade = key;
+        const title = value;
+
+        const id = tag + "_" + iterationNumber + "_" + grade;
+
+        const labelAttributes = [
+            {
+                attr: "for",
+                value: id
+            }
+        ];
+
+        const inputAttributes = [
+            {
+                attr: "type",
+                value: "radio"
+            },
+            {
+                attr: "id",
+                value: id
+            },
+            {
+                attr: "name",
+                value: "grade"
+            },
+            {
+                attr: "value",
+                value: grade
+            },
+            {
+                attr: "data-title",
+                value: title
+            }
+        ];
+
+        const input = createElement("INPUT", undefined, inputAttributes);
+        const label = createElement("LABEL", title, labelAttributes);
+        const br = createElement("BR");
+
+        element.appendChild(input);
+        element.appendChild(label);
+        element.appendChild(br);
+    }
+
+    return element;
+}
+
+function getQuestionnaireResults(outputTarget) {
+    let result = "";
+    const blocks = document.querySelectorAll("[data-tag]");
+
+    for (const block of blocks) {
+        const tag = block.dataset.tag;
+        const title = block.dataset.title;
+
+        let questionsCounter = 0;
+        let blockCandidateGradesSum = 0;
+
+        // Заголовок блока
+        result += `# ${title}\n\n`;
+
+        const qnas = block.querySelectorAll(".qna");
+
+        for (const qna of qnas) {
+            questionsCounter += 1;
+
+            const question = qna.querySelector(".question").innerText;
+
+            const gradeForm = qna.querySelector("form");
+            const gradeValue = Number(gradeForm.grade.value);
+            const gradeTitle = answerGrades.get(gradeValue);
+
+            blockCandidateGradesSum += gradeValue;
+
+            const notes = qna.querySelector(".notes").value;
+
+            result += `**Вопрос**:  \n${question}\n\n`;
+            result += `**Ответ**:  \n(${gradeValue}) ${gradeTitle}\n\n`;
+            result += `**Заметки**:  \n${notes ? notes : "."}\n\n`;
+            result += "----\n\n"
+        }
+
+        let blockMaxGrade = questionsCounter * MAX_SINGLE_GRADE;
+
+        result += `Результат по блоку: ${blockCandidateGradesSum} из ${blockMaxGrade}\n\n----\n\n`;
+    }
+
+    resultWrapper.innerHTML = "";
+    resultWrapper.innerHTML = result;
+}
+
+function copyTextToClipboard(element) {
+    try {
+        element.select();
+        element.setSelectionRange(0, 99999); // for mobile
+        document.execCommand("copy");
+        element.selectionStart = element.selectionEnd; // unselect
+    } catch (errMsg) {
+        console.error(errMsg);
+    }
+}
+
+// Формирование тела страницы
+for (const [key, value] of questionnaire) {
+    const tag = key.tag;
+    const title = key.title;
+
+    // Блок раздела
+    const blockWrapper = createElement("DIV", undefined, [{ attr: "data-tag", value: tag }, { attr: "data-title", value: title }]);
+
+    // Заголовок блока раздела
+    const header = createElement("H1", title);
+
+    blockWrapper.appendChild(header);
+
+    for (let i = 0; i < value.length; i++) {
+        // Блок с вопросами
+        const qnaWrapper = createElement("DIV");
+        addClass(qnaWrapper, "qna");
+
+        const iterationTag = tag + "_" + i;
+
+        // Вопрос
+        const qWrapper = createElement("DIV", value[i].q);
+        addClass(qWrapper, "question");
+
+        // Кнопка показа или скрытия ответа
+        const showAWrapper = createElement("DIV");
+
+        const showAButtonAttributes = [
+            {
+                attr: "href",
+                value: "javascript:void(0)"
+            },
+            {
+                attr: "data-target",
+                value: iterationTag + "_answer"
+            }
+        ];
+
+        const showAButton = createElement("A", "> Ответ", showAButtonAttributes);
+
+        showAButton.addEventListener("click", (event) => {
+            showElement(event.target.dataset.target);
+            showAButton.innerText = "< Ответ";
+        });
+
+        showAButton.addEventListener("dblclick", (event) => {
+            hideElement(event.target.dataset.target);
+            showAButton.innerText = "> Ответ";
+        });
+
+        showAWrapper.appendChild(showAButton);
+        
+        // Ответ
+        const aWrapperAttributes = [
+            {
+                attr: "id",
+                value: iterationTag + "_answer"
+            }
+        ];
+
+        const aWrapper = createElement("DIV", value[i].a, aWrapperAttributes);
+        addClass(aWrapper, "hidden");
+        addClass(aWrapper, "answer");
+
+        // Оценка ответа
+        const gradesWrapper = createGradesBlock(tag, i);
+
+        // Заметки
+        const notesWrapper = createElement("TEXTAREA");
+        addClass(notesWrapper, "notes");
+
+        // Наполнение блока вопросов
+        qnaWrapper.appendChild(qWrapper);
+        qnaWrapper.appendChild(showAWrapper);
+        qnaWrapper.appendChild(aWrapper);
+        qnaWrapper.appendChild(gradesWrapper);
+        qnaWrapper.appendChild(notesWrapper);
+
+        blockWrapper.appendChild(qnaWrapper);
+    }
+
+    questionnaireWrapper.appendChild(blockWrapper);
+}
+</script>
+
+</body>
+</html>
