@@ -1,7 +1,7 @@
 # mktr.sh
 
 ## Description
-Just a shell to run a python script against all work report files.
+Iterate through all files in the target directory that match the pattern `<target directory>/<year>/<month>/<year>.<month>.<day>.md`
 
 ## Usage
 
@@ -9,7 +9,7 @@ Just a shell to run a python script against all work report files.
 
 ## Positional and/or Named arguments
 
-`$1` - target directory (work reports directory)
+`$1` - string; full path to target directory
 
 ## Example
 
@@ -18,7 +18,26 @@ Just a shell to run a python script against all work report files.
 # mktr.py
 
 ## Description
-Parses working hours from the input file(s) and writes it to the time report file.
+Reads the input file and finds all occurrences of the pattern `[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2}`
+
+Forms a CSV row and writes it to the output file.
+
+Output CSV file field names are as follows:
+- day_total_mark
+- date
+- over_goal_minutes
+- below_goal_minutes
+- time_in
+- time_out
+- year
+- month
+- day
+- hour_in
+- minute_in
+- hour_out
+- minute_out
+
+Since there might be multiple occurrences of the mentioned pattern for a single day, special rows are written to represent the sum of matches for the day in question (day_total_mark == x).
 
 ## Usage
 
@@ -26,9 +45,11 @@ Parses working hours from the input file(s) and writes it to the time report fil
 
 ## Positional and/or Named arguments
 
-`sys.argv[1]` - work report file name
-`sys.argv[2]` - work report file path
-`sys.argv[3]` - time report output directory
+`sys.argv[1]` - string; file name
+
+`sys.argv[2]` - string; file path
+
+`sys.argv[3]` - string; output directory
 
 ## Example
 
